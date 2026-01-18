@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Mental Health Screening Result</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background: #f5f7fa;
+    margin: 0;
+}
+
+.container {
+    max-width: 700px;
+    margin: auto;
+    padding: 24px;
+}
+
+.result {
+    background: white;
+    padding: 28px;
+    border-radius: 14px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+}
+
+h2 {
+    margin-top: 0;
+    text-align: center;
+    color: #1f2933;
+}
+
+.section {
+    margin: 22px 0;
+}
+
+.level {
+    font-size: 20px;
+    font-weight: bold;
+    color: #111827;
+}
+
+.score {
+    font-size: 14px;
+    color: #555;
+    margin-top: 4px;
+}
+
+.message {
+    margin-top: 8px;
+    font-size: 15px;
+    color: #333;
+}
+
+.resources {
+    margin-top: 26px;
+    padding: 18px;
+    border-radius: 10px;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+}
+
+.resources h3 {
+    margin-top: 0;
+    font-size: 16px;
+    color: #111827;
+}
+
+.resources ul {
+    padding-left: 18px;
+    margin: 12px 0;
+}
+
+.resources li {
+    margin-bottom: 10px;
+    font-size: 14px;
+    color: #374151;
+}
+
+.note {
+    font-size: 13px;
+    color: #555;
+    margin-top: 28px;
+    line-height: 1.6;
+    border-top: 1px solid #e5e7eb;
+    padding-top: 18px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+  <div class="result">
+    <h2>Mental Health Screening Result</h2>
+
+    <!-- DEPRESSION -->
+    <div class="section">
+      <div class="level" id="phqLevel"></div>
+      <div class="score" id="phqScore"></div>
+      <div class="message" id="phqMsg"></div>
+    </div>
+
+    <!-- ANXIETY -->
+    <div class="section">
+      <div class="level" id="gadLevel"></div>
+      <div class="score" id="gadScore"></div>
+      <div class="message" id="gadMsg"></div>
+    </div>
+
+    <!-- TEXT ANALYSIS -->
+    <div class="section">
+      <div class="score" id="textInfo"></div>
+    </div>
+
+    <!-- RESOURCES -->
+    <div class="resources">
+      <h3>Talk to Someone (India)</h3>
+      <ul>
+        <li><strong>Kiran (Government of India Mental Health Helpline):</strong> 24×7 — 📞 1800-599-0019</li>
+        <li><strong>AASRA:</strong> 24×7 Suicide Prevention — 📞 +91-9820466726</li>
+        <li><strong>iCALL (TISS):</strong> Mon–Sat — 📞 +91-9152987821</li>
+        <li><strong>Sneha Foundation:</strong> 24×7 — 📞 044-24640050</li>
+        <li><strong>Vandrevala Foundation:</strong> 📞 9999-666-555</li>
+      </ul>
+      <p style="font-size:13px;color:#374151;">
+        If you feel unsafe or at immediate risk, please contact local emergency services
+        or visit the nearest hospital.
+      </p>
+    </div>
+
+    <!-- DISCLAIMER -->
+    <div class="note">
+      <strong>Disclaimer:</strong><br>
+      This tool is a <strong>mental health screening aid</strong> that combines standardized
+      questionnaires (PHQ-9 and GAD-7) with language-pattern analysis of user input.
+      It is <strong>not a medical diagnosis</strong> and should not be used as a substitute
+      for professional evaluation or treatment.
+      If symptoms are severe, persistent, or worsening, please consult a qualified
+      mental-health professional.
+    </div>
+
+  </div>
+</div>
+
+<script>
+/* ===== LOAD SCORES ===== */
+const phq = Number(localStorage.getItem("phqScore")) || 0;
+const gad = Number(localStorage.getItem("gadScore")) || 0;
+const textScore = Number(localStorage.getItem("textScore")) || 0;
+
+/* ===== SEVERITY FUNCTIONS ===== */
+function phqSeverity(score) {
+  if (score <= 4) return ["Depression: Minimal", "Minimal depressive symptoms were detected."];
+  if (score <= 9) return ["Depression: Mild", "Mild depressive symptoms were detected."];
+  if (score <= 14) return ["Depression: Moderate", "Moderate depressive symptoms may be affecting daily functioning."];
+  if (score <= 19) return ["Depression: Moderately Severe", "Symptoms are significant; professional support is recommended."];
+  return ["Depression: Severe", "Symptoms are severe; prompt professional help is advised."];
+}
+
+function gadSeverity(score) {
+  if (score <= 4) return ["Anxiety: Minimal", "Minimal anxiety symptoms were detected."];
+  if (score <= 9) return ["Anxiety: Mild", "Mild anxiety symptoms were detected."];
+  if (score <= 14) return ["Anxiety: Moderate", "Moderate anxiety symptoms may be affecting daily functioning."];
+  return ["Anxiety: Severe", "Severe anxiety symptoms were detected; professional support is recommended."];
+}
+
+/* ===== APPLY RESULTS ===== */
+const [phqLabel, phqMsg] = phqSeverity(phq);
+const [gadLabel, gadMsg] = gadSeverity(gad);
+
+document.getElementById("phqLevel").textContent = phqLabel;
+document.getElementById("phqScore").textContent = `PHQ-9 Score: ${phq} / 27`;
+document.getElementById("phqMsg").textContent = phqMsg;
+
+document.getElementById("gadLevel").textContent = gadLabel;
+document.getElementById("gadScore").textContent = `GAD-7 Score: ${gad} / 21`;
+document.getElementById("gadMsg").textContent = gadMsg;
+
+document.getElementById("textInfo").textContent =
+  textScore > 0
+    ? "Written response analysis identified language patterns associated with emotional distress, which were considered alongside questionnaire scores."
+    : "No significant emotional distress patterns were identified in the written response.";
+</script>
+
+</body>
+</html>

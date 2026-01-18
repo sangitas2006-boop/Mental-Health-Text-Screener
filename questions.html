@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Mental Health Screening</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: transparent;
+}
+
+#fishCanvas {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background: linear-gradient(to bottom, #eaf3fb, #dbe9f6);
+}
+
+.container {
+  max-width: 720px;
+  margin: auto;
+  padding: 28px 20px;
+  position: relative;
+  z-index: 2;
+  animation: fadeIn 0.8s ease-out;
+}
+
+h2 {
+  text-align: center;
+  color: #1f2933;
+  margin-bottom: 8px;
+}
+
+.note {
+  font-size: 13px;
+  color: #5f6c7b;
+  margin-bottom: 28px;
+  text-align: center;
+}
+
+.question {
+  background: #ffffff;
+  padding: 20px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  border: 1px solid #e5eaf0;
+  box-shadow: 0 6px 14px rgba(0,0,0,0.06);
+}
+
+.options label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #334155;
+}
+
+.options label:hover {
+  background: #f3f7fb;
+}
+
+textarea {
+  width: 100%;
+  min-height: 120px;
+  border-radius: 8px;
+  padding: 12px;
+  border: 1px solid #d1d9e0;
+  font-size: 14px;
+}
+
+button {
+  width: 100%;
+  padding: 16px;
+  font-size: 15px;
+  font-weight: 600;
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #1d4ed8;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+</style>
+</head>
+
+<body>
+
+<canvas id="fishCanvas"></canvas>
+
+<div class="container">
+  <h2>Mental Health Self-Assessment</h2>
+  <p class="note">
+    Over the last <strong>2 weeks</strong>, how often have you been bothered by the following?
+  </p>
+
+  <div id="questions"></div>
+
+  <div class="question">
+    <strong>In your own words, how have you been feeling lately?</strong>
+    <textarea id="personalInput" placeholder="You can write freely here..."></textarea>
+  </div>
+
+  <button onclick="calculateResult()">View My Results</button>
+</div>
+
+<script>
+/* ================= PHQ-9 & GAD-7 ================= */
+
+const phq9 = [
+  "Little interest or pleasure in doing things",
+  "Feeling down, depressed, or hopeless",
+  "Trouble falling or staying asleep, or sleeping too much",
+  "Feeling tired or having little energy",
+  "Poor appetite or overeating",
+  "Feeling bad about yourself — or that you are a failure",
+  "Trouble concentrating on things",
+  "Moving or speaking slowly, or being restless",
+  "Thoughts that you would be better off dead or hurting yourself"
+];
+
+const gad7 = [
+  "Feeling nervous, anxious, or on edge",
+  "Not being able to stop or control worrying",
+  "Worrying too much about different things",
+  "Trouble relaxing",
+  "Being so restless that it is hard to sit still",
+  "Becoming easily annoyed or irritable",
+  "Feeling afraid as if something awful might happen"
+];
+
+const questions = [...phq9, ...gad7];
+const container = document.getElementById("questions");
+
+questions.forEach((q, i) => {
+  const div = document.createElement("div");
+  div.className = "question";
+  div.innerHTML = `
+    <strong>${i + 1}. ${q}</strong>
+    <div class="options">
+      ${["Not at all","Several days","More than half the days","Nearly every day"]
+        .map((l, v) => `
+        <label>
+          <input type="radio" name="q${i}" value="${v}">
+          ${l}
+        </label>`).join("")}
+    </div>
+  `;
+  container.appendChild(div);
+});
+
+/* ================= NLP TEXT ANALYSIS ================= */
+
+const depressionPhrases = [
+  "feel empty","lost interest","nothing matters","emotionally numb",
+  "feel worthless","no motivation","tired of life","can't go on",
+  "life feels pointless","feel broken","mentally exhausted",
+  "emotionally drained","hate myself","feel isolated","constant sadness",
+  "feel trapped","feel useless","no energy to do anything"
+];
+
+const anxietyPhrases = [
+  "constant worry","panic attacks","can't relax","always anxious",
+  "heart racing","restless mind","overthinking everything",
+  "fear something bad","unable to calm down"
+];
+
+const depressionWords = [
+  "sad","hopeless","worthless","exhausted","numb","alone","burned",
+  "unmotivated","helpless","pointless","tired","crying","broken","lost"
+];
+
+const anxietyWords = [
+  "anxious","panic","worried","stress","fear","nervous","tense","restless"
+];
+
+const negations = [
+  "not","never","no","don't","doesn't","isn't","wasn't","aren't","won't"
+];
+
+function analyzeTextMentalState(text) {
+  if (!text || text.trim().length < 10) return 0;
+
+  text = text.toLowerCase();
+  let score = 0;
+  const words = text.split(/\s+/);
+
+  function isNegated(i) {
+    return words.slice(Math.max(0, i - 3), i)
+      .some(w => negations.includes(w));
+  }
+
+  depressionPhrases.forEach(p => { if (text.includes(p)) score += 3; });
+  anxietyPhrases.forEach(p => { if (text.includes(p)) score += 2; });
+
+  words.forEach((w, i) => {
+    if (depressionWords.includes(w) && !isNegated(i)) score += 1;
+    if (anxietyWords.includes(w) && !isNegated(i)) score += 0.5;
+  });
+
+  return Math.min(score, 8);
+}
+
+/* ================= FINAL SCORING ================= */
+
+function calculateResult() {
+  let phq = 0, gad = 0;
+
+  for (let i = 0; i < questions.length; i++) {
+    const sel = document.querySelector(`input[name="q${i}"]:checked`);
+    if (!sel) return alert("Please answer all questions.");
+    if (i < 9) phq += +sel.value;
+    else gad += +sel.value;
+  }
+
+  const text = document.getElementById("personalInput").value;
+  const textScore = analyzeTextMentalState(text);
+
+  localStorage.setItem("phqScore", phq + Math.round(textScore * 0.6));
+  localStorage.setItem("gadScore", gad + Math.round(textScore * 0.4));
+  localStorage.setItem("textScore", textScore);
+  localStorage.setItem("personalText", text);
+
+  location.href = "result.html";
+}
+
+/* ================= BACKGROUND ANIMATION ================= */
+
+const canvas = document.getElementById("fishCanvas");
+const ctx = canvas.getContext("2d");
+
+function resize() {
+  canvas.width = innerWidth;
+  canvas.height = innerHeight;
+}
+resize();
+addEventListener("resize", resize);
+
+class Fish {
+  constructor(){ this.reset(); }
+  reset(){
+    this.y = Math.random()*canvas.height;
+    this.dir = Math.random()>0.5?1:-1;
+    this.x = this.dir===1?-60:canvas.width+60;
+    this.speed = 0.5 + Math.random();
+    this.size = 10 + Math.random()*10;
+  }
+  draw(){
+    ctx.save();
+    ctx.translate(this.x,this.y);
+    ctx.scale(this.dir,1);
+    ctx.fillStyle="#4f9cff";
+    ctx.beginPath();
+    ctx.ellipse(0,0,this.size*1.6,this.size,0,0,Math.PI*2);
+    ctx.fill();
+    ctx.restore();
+  }
+  update(){
+    this.x += this.speed*this.dir;
+    if(this.x>canvas.width+80||this.x<-80) this.reset();
+  }
+}
+
+const fishes = Array.from({length:20},()=>new Fish());
+(function animate(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  fishes.forEach(f=>{f.update();f.draw();});
+  requestAnimationFrame(animate);
+})();
+</script>
+
+</body>
+</html>
