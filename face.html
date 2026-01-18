@@ -156,8 +156,8 @@ let detectedEmotion = "neutral";
 
 async function loadModels() {
     try {
-        await faceapi.nets.tinyFaceDetector.loadFromUri("/models");
-        await faceapi.nets.faceExpressionNet.loadFromUri("/models");
+        await faceapi.nets.tinyFaceDetector.loadFromUri("models");
+        await faceapi.nets.faceExpressionNet.loadFromUri("models");
         statusText.textContent = "Models loaded. Starting camera...";
         startVideo();
     } catch (e) {
@@ -213,3 +213,4 @@ loadModels();
 </script>
 </body>
 </html>
+
