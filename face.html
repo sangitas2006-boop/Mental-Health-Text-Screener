@@ -4,10 +4,10 @@
 <meta charset="UTF-8">
 <title>Facial Expression Check</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <link rel="icon" href="data:,">
 
 <style>
+/* --- Your same styling --- */
 body {
     margin: 0;
     font-family: Arial, sans-serif;
@@ -16,7 +16,6 @@ body {
     justify-content: center;
     min-height: 100vh;
 }
-
 .container {
     width: 100%;
     max-width: 520px;
@@ -24,50 +23,27 @@ body {
     box-sizing: border-box;
     text-align: center;
 }
-
-h2 {
-    font-size: clamp(20px, 5vw, 26px);
-    color: #1f2933;
-}
-
-/* ===== CAMERA FRAME WRAPPER ===== */
+h2 { font-size: clamp(20px, 5vw, 26px); color: #1f2933; }
 .camera-frame {
     position: relative;
     margin-top: 16px;
     border-radius: 18px;
     padding: 6px;
-    background: linear-gradient(
-        135deg,
-        rgba(25,118,210,0.4),
-        rgba(21,101,192,0.15)
-    );
+    background: linear-gradient(135deg, rgba(25,118,210,0.4), rgba(21,101,192,0.15));
     animation: framePulse 3.5s ease-in-out infinite;
 }
-
-/* INNER BORDER */
 .camera-frame::before {
     content: "";
     position: absolute;
     inset: 6px;
     border-radius: 14px;
     border: 1px solid rgba(25,118,210,0.35);
-    pointer-events: none;
 }
-
-/* CORNER ACCENTS */
-.corner {
-    position: absolute;
-    width: 18px;
-    height: 18px;
-    border: 2px solid rgba(25,118,210,0.7);
-}
-
+.corner { position: absolute; width: 18px; height: 18px; border: 2px solid rgba(25,118,210,0.7); }
 .corner.tl { top: 0; left: 0; border-right: none; border-bottom: none; }
 .corner.tr { top: 0; right: 0; border-left: none; border-bottom: none; }
 .corner.bl { bottom: 0; left: 0; border-right: none; border-top: none; }
 .corner.br { bottom: 0; right: 0; border-left: none; border-top: none; }
-
-/* VIDEO */
 video {
     width: 100%;
     border-radius: 14px;
@@ -75,23 +51,8 @@ video {
     display: block;
     box-shadow: 0 12px 28px rgba(0,0,0,0.18);
 }
-
-/* STATUS */
-.status {
-    margin-top: 16px;
-    font-size: 15px;
-    color: #334155;
-    font-weight: 500;
-}
-
-/* NOTE */
-.note {
-    font-size: 13px;
-    color: #6b7280;
-    margin-top: 8px;
-}
-
-/* BUTTON */
+.status { margin-top: 16px; font-size: 15px; color: #334155; font-weight: 500; }
+.note { font-size: 13px; color: #6b7280; margin-top: 8px; }
 button {
     width: 100%;
     margin-top: 22px;
@@ -102,21 +63,10 @@ button {
     background: linear-gradient(135deg, #1976d2, #1565c0);
     color: white;
     cursor: pointer;
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
-
-button:hover {
-    box-shadow: 0 6px 18px rgba(25,118,210,0.35);
-}
-
-button:active {
-    transform: scale(0.98);
-}
-
-/* ===== SUBTLE SCAN PULSE ===== */
 @keyframes framePulse {
-    0%   { box-shadow: 0 0 0 rgba(25,118,210,0.0); }
-    50%  { box-shadow: 0 0 28px rgba(25,118,210,0.25); }
+    0% { box-shadow: 0 0 0 rgba(25,118,210,0.0); }
+    50% { box-shadow: 0 0 28px rgba(25,118,210,0.25); }
     100% { box-shadow: 0 0 0 rgba(25,118,210,0.0); }
 }
 </style>
@@ -125,28 +75,24 @@ button:active {
 <body>
 <div class="container">
     <h2>Facial Expression Check</h2>
-
     <p class="note">
         This detects visible facial expressions only.
         It does not determine mental health conditions.
     </p>
 
-    <!-- CAMERA WITH PROFESSIONAL FRAME -->
     <div class="camera-frame">
         <span class="corner tl"></span>
         <span class="corner tr"></span>
         <span class="corner bl"></span>
         <span class="corner br"></span>
-
         <video id="video" autoplay muted playsinline></video>
     </div>
 
     <div class="status" id="statusText">Loading models…</div>
-
     <button onclick="continueNext()">Continue</button>
 </div>
 
-<!-- face-api -->
+<!-- Face API -->
 <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
 
 <script>
@@ -154,31 +100,35 @@ const video = document.getElementById("video");
 const statusText = document.getElementById("statusText");
 let detectedEmotion = "neutral";
 
+// Load required models
 async function loadModels() {
     try {
-        await faceapi.nets.tinyFaceDetector.loadFromUri("models");
-        await faceapi.nets.faceExpressionNet.loadFromUri("models");
+        await faceapi.nets.tinyFaceDetector.loadFromUri("/models");
+        await faceapi.nets.faceExpressionNet.loadFromUri("/models");
+
         statusText.textContent = "Models loaded. Starting camera...";
         startVideo();
-    } catch (e) {
-        console.error(e);
-        statusText.textContent = "Failed to load models.";
+    } catch (error) {
+        console.error(error);
+        statusText.textContent = "Model loading failed. Check /models folder.";
     }
 }
 
+// Start webcam
 async function startVideo() {
     try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true });
         video.srcObject = stream;
-    } catch (e) {
-        console.error(e);
+    } catch (error) {
+        console.error(error);
         statusText.textContent = "Camera permission denied.";
     }
 }
 
+// Run detection loop
 video.addEventListener("play", () => {
     const options = new faceapi.TinyFaceDetectorOptions({
-        inputSize: 224,
+        inputSize: 160,
         scoreThreshold: 0.5
     });
 
@@ -196,21 +146,22 @@ video.addEventListener("play", () => {
                 );
 
             statusText.textContent =
-                "Detected Expression: " +
-                detectedEmotion.charAt(0).toUpperCase() +
-                detectedEmotion.slice(1);
+              "Detected Expression: " +
+              detectedEmotion.charAt(0).toUpperCase() +
+              detectedEmotion.slice(1);
+        } else {
+            statusText.textContent = "No face detected";
         }
     }, 700);
 });
 
+// Store result and continue
 function continueNext() {
     localStorage.setItem("faceEmotion", detectedEmotion);
     window.location.href = "./questions.html";
-
 }
 
 loadModels();
 </script>
 </body>
 </html>
-
